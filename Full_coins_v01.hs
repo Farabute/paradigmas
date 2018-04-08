@@ -56,6 +56,24 @@ luchoEsUnAhorranteErrante unaPersona | nombre unaPersona == "Luciano" = ahorrant
 
 -- Pago entre usuarios
 
+pepeLeDa7UnidadesALucho :: Transaccion
 pepeLeDa7UnidadesALucho unaPersona | nombre unaPersona == "Jose" = extraccion 7 unaPersona
                                    | nombre unaPersona == "Luciano" = depositar 7 unaPersona
                                    | otherwise = quedaIgual unaPersona
+-- Test
+
+ejecutarTests = hspec $ do
+  describe "Probando las funciones anteriores\n" $ do
+    it "Pepe deposita 15 monedas" (depositar 15 pepe `shouldBe` nuevaBilletera 25 pepe)
+    it "Lucho extrae 5 monedas" (extraccion 5 lucho `shouldBe` nuevaBilletera 0 lucho)
+    it "Pepe recibe un upgrade" (upgrade pepe `shouldBe` nuevaBilletera 12 pepe)
+    it "Pepe cerro su cuenta" (cierreDeCuenta pepe `shouldBe` nuevaBilletera 0 pepe)
+    it "Lucho no cambio su billetera" (quedaIgual lucho `shouldBe` nuevaBilletera 2 lucho)
+    it "Lucho cierra la cuenta" (luchoCierraLaCuenta lucho `shouldBe` nuevaBilletera 0 lucho)
+    it "Pepe deposita 5 monedas" (pepeDeposita5Monedas pepe `shouldBe` nuevaBilletera 15 pepe)
+    it "Pepe toca y se va" (tocoYMeVoy pepe `shouldBe` nuevaBilletera 0 pepe)
+    it "Pepe es un ahorrante errante" (ahorranteErrante pepe `shouldBe` nuevaBilletera 34 pepe)
+    it "Lucho toca y se va" (luchoTocaYSeVa lucho `shouldBe` nuevaBilletera 0 lucho)
+    it "Lucho es un ahorrante errante" (luchoEsUnAhorranteErrante lucho `shouldBe` nuevaBilletera 24.400002 lucho)
+    it "Pepe le da 7 unidades a Lucho" (pepeLeDa7UnidadesALucho pepe `shouldBe` nuevaBilletera 3 pepe)
+    it "Pepe le da 7 unidades a Lucho" (pepeLeDa7UnidadesALucho lucho `shouldBe` nuevaBilletera 9 lucho)
