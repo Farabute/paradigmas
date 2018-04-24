@@ -34,7 +34,7 @@ ejecutarTests = hspec $ do
   it "Pepe realiza transacción 2" $ pepeDeposita5Monedas pepe `shouldBe` nuevaBilletera 15 pepe
   it "Pepe2 realiza transacción 2 con billetera de 50 unidades" $ (pepeDeposita5Monedas. depositar 30) pepe2 `shouldBe` nuevaBilletera 55 pepe2
   it "Lucho toca y se va" $ luchoTocaYSeVa lucho `shouldBe` nuevaBilletera 0 lucho
-  it "Lucho es un ahorrante errante" $ luchoEsUnAhorranteErrante lucho `shouldBe` nuevaBilletera 24.400002 lucho
+  it "Lucho es un ahorrante errante" $ luchoEsUnAhorranteErrante lucho `shouldBe` nuevaBilletera 24.4 lucho
   it "Pepe toca y se va" $ tocoYMeVoy pepe `shouldBe` nuevaBilletera 0 pepe
   it "Pepe es un ahorrante errante" $ ahorranteErrante pepe `shouldBe` nuevaBilletera 34 pepe
   describe "\nProbando el pago entre usuarios\n" $ do
@@ -43,23 +43,31 @@ ejecutarTests = hspec $ do
   
   
 -- Operaciones con Personas --
-	
+
+--type billetera = Float Persona -> Persona
+type cuenta = Persona -> Persona
+
+--nuevaBilletera :: billetera	
 nuevaBilletera unNumero unaPersona = unaPersona {billetera = unNumero}
 
 
 -- Eventos --
 
+--depositar :: billetera
 depositar plata unaPersona = nuevaBilletera (billetera unaPersona + plata) unaPersona
 
-extraccion plata unaPersona | billetera unaPersona - plata < 0 = nuevaBilletera 0 unaPersona
-                            | otherwise = nuevaBilletera (billetera unaPersona - plata) unaPersona
+--extraccion :: billetera
+extraccion plata unaPersona = nuevaBilletera(max (billetera unaPersona - plata) 0) unaPersona
 
-upgrade unaPersona | billetera unaPersona * 0.2 > 10 = nuevaBilletera (billetera unaPersona + 10) unaPersona
-                   | otherwise = nuevaBilletera (billetera unaPersona * 1.2) unaPersona
+upgrade :: cuenta
+upgrade unaPersona = nuevaBilletera (billetera unaPersona + min (billetera unaPersona * 0.2) 10) unaPersona
 
+cierreDeCuenta :: Cuenta
 cierreDeCuenta unaPersona = nuevaBilletera 0 unaPersona
 
-quedaIgual unaPersona = nuevaBilletera (billetera unaPersona) unaPersona
+quedaIgual :: cuenta
+quedaIgual unaPersona = id unaPersona
+
 
 -- Transacciones --
 
