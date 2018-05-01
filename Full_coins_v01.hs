@@ -44,28 +44,29 @@ ejecutarTests = hspec $ do
   
 -- Operaciones con Personas --
 
---type billetera = Float Persona -> Persona
-type cuenta = Persona -> Persona
+type Billetera = Float
+type EventoSobreBilletera =  Billetera -> Persona -> Persona
+type EventoSobrePersona = Persona -> Persona
 
---nuevaBilletera :: billetera	
+nuevaBilletera :: Billetera -> Persona -> Persona	
 nuevaBilletera unNumero unaPersona = unaPersona {billetera = unNumero}
 
 
 -- Eventos --
 
---depositar :: billetera
+depositar :: EventoSobreBilletera
 depositar plata unaPersona = nuevaBilletera (billetera unaPersona + plata) unaPersona
 
---extraccion :: billetera
+extraccion :: EventoSobreBilletera
 extraccion plata unaPersona = nuevaBilletera(max (billetera unaPersona - plata) 0) unaPersona
 
-upgrade :: cuenta
+upgrade :: EventoSobrePersona
 upgrade unaPersona = nuevaBilletera (billetera unaPersona + min (billetera unaPersona * 0.2) 10) unaPersona
 
-cierreDeCuenta :: Cuenta
+cierreDeCuenta :: EventoSobrePersona
 cierreDeCuenta unaPersona = nuevaBilletera 0 unaPersona
 
-quedaIgual :: cuenta
+quedaIgual :: EventoSobrePersona
 quedaIgual unaPersona = id unaPersona
 
 
@@ -94,8 +95,13 @@ luchoEsUnAhorranteErrante unaPersona | nombre unaPersona == "Luciano" = ahorrant
                                      | otherwise = quedaIgual unaPersona
 
 -- Pago entre usuarios --
+usuarioRecibePago :: Float -> Persona -> Persona
+usuarioRecibePago unMonto = depositar unMonto
+
+usuarioRealizaPago :: Float -> Persona -> Persona
+usuarioRealizaPago unMonto = extraccion unMonto
 
 pepeLeDa7UnidadesALucho :: Transaccion
-pepeLeDa7UnidadesALucho unaPersona | nombre unaPersona == "Jose" = extraccion 7 unaPersona
-                                   | nombre unaPersona == "Luciano" = depositar 7 unaPersona
+pepeLeDa7UnidadesALucho unaPersona | nombre unaPersona == "Jose" = usuarioRealizaPago 7 unaPersona
+                                   | nombre unaPersona == "Luciano" = usuarioRecibePago 7 unaPersona
                                    | otherwise = quedaIgual unaPersona
