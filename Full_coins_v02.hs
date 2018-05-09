@@ -14,7 +14,6 @@ lucho = Persona "Luciano" 2
 pepe2 = Persona "Jose" 20
 billeteraDe10Creditos = Persona "billeteraDe10Creditos" 10
 
-
 -- Operaciones con Personas --
 
 type Billetera = Float
@@ -23,7 +22,6 @@ type EventoSobrePersona = Persona -> Persona
 
 nuevaBilletera :: Billetera -> Persona -> Persona
 nuevaBilletera unNumero unaPersona = unaPersona {billetera = unNumero}
-
 
 -- Eventos --
 
@@ -56,7 +54,7 @@ cierreDeCuenta :: EventoSobrePersona
 cierreDeCuenta unaPersona = nuevaBilletera 0 unaPersona
 
 quedaIgual :: EventoSobrePersona
-quedaIgual unaPersona = id unaPersona
+quedaIgual = id
 
 
 -- Transacciones --
@@ -71,7 +69,7 @@ transaccionesTests = hspec $ do
   it "14. Pepe toca y se va" $ tocoYMeVoy pepe `shouldBe` nuevaBilletera 0 pepe
   it "    Lucho toca y se va" $ luchoTocaYSeVa lucho `shouldBe` nuevaBilletera 0 lucho
   it "15. Pepe es un ahorrante errante" $ ahorranteErrante pepe `shouldBe` nuevaBilletera 34 pepe
-  it "    Lucho es un ahorrante errante" $ luchoEsUnAhorranteErrante lucho `shouldBe` nuevaBilletera 24.4 lucho  
+  it "    Lucho es un ahorrante errante" $ luchoEsUnAhorranteErrante lucho `shouldBe` nuevaBilletera 24.4 lucho
 
 type Transaccion = Persona -> Persona
 luchoCierraLaCuenta :: Transaccion
@@ -128,21 +126,35 @@ pepeLeDa7UnidadesALucho unaPersona | nombre unaPersona == "Jose" = usuarioRealiz
 
 transaccion5 = pepeLeDa7UnidadesALucho
 
--- Bloque -- 
-	
-type Bloque = [Transaccion]
-
-bloque1 = [transaccion1,transaccion2,transaccion2,transaccion2,transaccion3,transaccion4,transaccion5,transaccion3]
+-- Bloque --
 
 -- Test bloques
 
 bloqueTests = hspec $ do
-describe "\nProbando el bloques\n" $ do
+  describe "\nProbando el bloques\n" $ do
     it "21. Aplicamos bloque1 a pepe y deberia resultar un nuevo pepe con 18 unidades en su billetera" $ aplicarBloque bloque1 pepe `shouldBe` nuevaBilletera 18 pepe
 
-aplicarBloque :: Bloque -> Persona -> Persona
-aplicarBloque (cabeza : cola) = ((aplicarBloque cola).cabeza)
-aplicarBloque [] = quedaIgual
+type Bloque = [Transaccion]
+bloque1 = [transaccion1,transaccion2,transaccion2,transaccion2,transaccion3,transaccion4,transaccion5,transaccion3]
 
-saldosMayoresN :: [Persona] -> Bloque -> Float -> [Persona] 
-saldosMayoresN [personas] bloque numero = (filter ((>numero).billetera).map(aplicarBloque bloque))[personas]
+type Usuarios = [Persona]
+usuarios = [pepe, lucho, pepe]
+
+aplicarTransaccion :: Transaccion -> Persona -> Persona
+aplicarTransaccion = ($)
+
+aplicarBloque :: Bloque -> Persona -> Persona
+aplicarBloque bloque persona = foldr aplicarTransaccion persona bloque
+
+saldoMayorA :: Usuarios -> Billetera -> Usuarios
+saldoMayorA usuarios numero = filter ((>numero).billetera) (map (aplicarBloque bloque1) usuarios)
+
+masAdinerado :: Usuarios -> Persona
+numeroMayor usuarios = maximum(map (billetera.(aplicarBloque bloque1)) usuarios)
+masAdinerado usuarios = head (filter ((== (numeroMayor usuarios)).billetera) (map (aplicarBloque bloque1) usuarios))
+
+menosAdinerado :: Usuarios -> Persona
+numeroMenor usuarios = minimum(map (billetera.(aplicarBloque bloque1)) usuarios)
+menosAdinerado usuarios = head (filter ((== (numeroMenor usuarios)).billetera) (map (aplicarBloque bloque1) usuarios))
+
+--mayorValor (cabeza : cola) = filter (((>).billetera) cabeza) (billetera cola)
