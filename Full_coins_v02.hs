@@ -133,12 +133,29 @@ transaccion5 = pepeLeDa7UnidadesALucho
 bloqueTests = hspec $ do
   describe "\nProbando el bloques\n" $ do
     it "21. Aplicamos bloque1 a pepe y deberia resultar un nuevo pepe con 18 unidades en su billetera" $ aplicarBloque bloque1 pepe `shouldBe` nuevaBilletera 18 pepe
+    it "22. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que pepe es el unico con un saldo mayor a 10 en su billetera" $ saldoMayorA usuarios 10 bloque1 `shouldBe` [nuevaBilletera 18 pepe]
+    it "23. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que pepe es el mas adinerado" $ masAdinerado usuarios bloque1 `shouldBe` nuevaBilletera 18 pepe
+    it "24. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Lucho es el menos adinerado" $ menosAdinerado usuarios bloque1 `shouldBe` nuevaBilletera 0 lucho
+    it "26. Aplicamos nuestro Block Chain a Pepe, deberia quedar con una billetera de 115" $ aplicarCadenaUsuario cadenaBloques pepe `shouldBe` nuevaBilletera 115 pepe
+    it "27. Aplicamos los primeras 3 bloques de nuestro Block Chain a Pepe, deberia quedar con una billetera de 51" $ aplicarNCadenaUsuario cadenaBloques pepe 3 `shouldBe` nuevaBilletera 51 pepe
+    it "28. Aplicamos nuestro Block Chain a Pepe y Lucho. Pepe deberia quedar con una billetera de 115 y Lucho con 0" $ aplicarCadenaAUsuarios cadenaBloques usuarios `shouldBe` [nuevaBilletera 115 pepe, nuevaBilletera 0 lucho]
+    it "29. Deberían ser 11 bloques de nuestra Block Chain para que Pepe supere los 10000 en su billetera" $ aplicarCadenaUsuario (take 11 cadenaBloquesInfinita) pepe `shouldBe` nuevaBilletera 16386 pepe
+
 
 type Bloque = [Transaccion]
+bloque1 :: Bloque
 bloque1 = [transaccion1,transaccion2,transaccion2,transaccion2,transaccion3,transaccion4,transaccion5,transaccion3]
 
+bloque2 :: Bloque
+bloque2 = [transaccion2,transaccion2,transaccion2,transaccion2,transaccion2]
+
+type BlockChain = [Bloque]
+cadenaBloques :: BlockChain
+cadenaBloques = bloque2 : take 10 (repeat bloque1)
+
+
 type Usuarios = [Persona]
-usuarios = [pepe, lucho, pepe]
+usuarios = [pepe, lucho]
 
 aplicarTransaccion :: Transaccion -> Persona -> Persona
 aplicarTransaccion = ($)
@@ -146,15 +163,33 @@ aplicarTransaccion = ($)
 aplicarBloque :: Bloque -> Persona -> Persona
 aplicarBloque bloque persona = foldr aplicarTransaccion persona bloque
 
-saldoMayorA :: Usuarios -> Billetera -> Usuarios
-saldoMayorA usuarios numero = filter ((>numero).billetera) (map (aplicarBloque bloque1) usuarios)
+saldoMayorA :: Usuarios -> Billetera -> Bloque -> Usuarios
+saldoMayorA usuarios numero unBloque = filter ((>numero).billetera) (map (aplicarBloque unBloque) usuarios)
 
-masAdinerado :: Usuarios -> Persona
-numeroMayor usuarios = maximum(map (billetera.(aplicarBloque bloque1)) usuarios)
-masAdinerado usuarios = head (filter ((== (numeroMayor usuarios)).billetera) (map (aplicarBloque bloque1) usuarios))
+numeroMayor :: Usuarios -> Bloque -> Billetera
+numeroMayor usuarios unBloque = maximum(map (billetera.(aplicarBloque unBloque)) usuarios)
+masAdinerado :: Usuarios -> Bloque -> Persona
+masAdinerado usuarios unBloque = head (filter ((== (numeroMayor usuarios unBloque)).billetera) (map (aplicarBloque unBloque) usuarios))
 
-menosAdinerado :: Usuarios -> Persona
-numeroMenor usuarios = minimum(map (billetera.(aplicarBloque bloque1)) usuarios)
-menosAdinerado usuarios = head (filter ((== (numeroMenor usuarios)).billetera) (map (aplicarBloque bloque1) usuarios))
+numeroMenor :: Usuarios -> Bloque -> Billetera
+numeroMenor usuarios unBloque = minimum(map (billetera.(aplicarBloque unBloque)) usuarios)
+menosAdinerado :: Usuarios -> Bloque -> Persona
+menosAdinerado usuarios unBloque = head (filter ((== (numeroMenor usuarios unBloque)).billetera) (map (aplicarBloque unBloque) usuarios))
 
---mayorValor (cabeza : cola) = filter (((>).billetera) cabeza) (billetera cola)
+aplicarCadenaBloque = map (aplicarBloque)
+aplicarCadenaUsuario unaCadenaDeBloques unaPersona = foldr ($) unaPersona (aplicarCadenaBloque unaCadenaDeBloques)
+
+aplicarNCadenaBloque unaCadenaDeBloques numero | numero >= length unaCadenaDeBloques = map (aplicarBloque) unaCadenaDeBloques
+                                               | otherwise =  map (aplicarBloque) (take numero unaCadenaDeBloques)
+aplicarNCadenaUsuario unaCadenaDeBloques unaPersona numero = foldr ($) unaPersona (aplicarNCadenaBloque unaCadenaDeBloques numero)
+
+aplicarCadenaAUsuarios unaCadenaDeBloques unasPersonas = map (fold2R ($) (aplicarCadenaBloque unaCadenaDeBloques)) unasPersonas
+
+cadenaBloquesInfinita = bloque1 : sigCadena bloque1 bloque1
+sigCadena antUlt ult = (antUlt ++ antUlt) : sigCadena (antUlt ++ antUlt) ult
+
+-- Invertir Parametros de mi nueva funcion fold2R
+
+flipear :: Foldable t => ((a -> b -> b) -> b -> t a -> b) -> ((a -> b -> b) -> t a -> b -> b)
+flipear func arg1 arg2 arg3 = func arg1 arg3 arg2
+fold2R = flipear foldr
