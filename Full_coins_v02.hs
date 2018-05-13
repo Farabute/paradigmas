@@ -132,9 +132,9 @@ transaccion5 = pepeLeDa7UnidadesALucho
 
 bloqueTests = hspec $ do
   describe "\nProbando el bloques\n" $ do
-    it "21. Aplicamos bloque1 a pepe y deberia resultar un nuevo pepe con 18 unidades en su billetera" $ aplicarBloque bloque1 pepe `shouldBe` nuevaBilletera 18 pepe
-    it "22. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que pepe es el unico con un saldo mayor a 10 en su billetera" $ saldoMayorA usuarios 10 bloque1 `shouldBe` [nuevaBilletera 18 pepe]
-    it "23. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que pepe es el mas adinerado" $ masAdinerado usuarios bloque1 `shouldBe` nuevaBilletera 18 pepe
+    it "21. Aplicamos bloque1 a Pepe y deberia resultar un nuevo Pepe con 18 unidades en su billetera" $ aplicarBloque bloque1 pepe `shouldBe` nuevaBilletera 18 pepe
+    it "22. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el unico con un saldo mayor a 10 en su billetera" $ saldoMayorA usuarios 10 bloque1 `shouldBe` [nuevaBilletera 18 pepe]
+    it "23. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el mas adinerado" $ masAdinerado usuarios bloque1 `shouldBe` nuevaBilletera 18 pepe
     it "24. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Lucho es el menos adinerado" $ menosAdinerado usuarios bloque1 `shouldBe` nuevaBilletera 0 lucho
 --    it "25. Aplicamos nuestro Block Chain a Pepe, deberiamos chequear que el bloque que lo deja con peor saldo es el bloque1, y lo deja con una billetera de 18" $ aplicarBloque peorBloque pepe `shouldBe` nuevaBilletera 18 pepe
     it "26. Aplicamos nuestro Block Chain a Pepe, deberia quedar con una billetera de 115" $ aplicarCadenaUsuario cadenaBloques pepe `shouldBe` nuevaBilletera 115 pepe
@@ -179,13 +179,20 @@ numeroMenor usuarios unBloque = minimum(map (billetera.(aplicarBloque unBloque))
 menosAdinerado :: Usuarios -> Bloque -> Persona
 menosAdinerado usuarios unBloque = head (filter ((== (numeroMenor usuarios unBloque)).billetera) (map (aplicarBloque unBloque) usuarios))
 
+aplicarCadenaBloque :: BlockChain -> [Persona -> Persona]
 aplicarCadenaBloque = map (aplicarBloque)
+
+aplicarCadenaUsuario :: BlockChain -> Persona -> Persona
 aplicarCadenaUsuario unaCadenaDeBloques unaPersona = foldr ($) unaPersona (aplicarCadenaBloque unaCadenaDeBloques)
 
+aplicarNCadenaBloque :: BlockChain -> Int -> [Persona -> Persona]
 aplicarNCadenaBloque unaCadenaDeBloques numero | numero >= length unaCadenaDeBloques = map (aplicarBloque) unaCadenaDeBloques
                                                | otherwise =  map (aplicarBloque) (take numero unaCadenaDeBloques)
+                                               
+aplicarNCadenaUsuario :: BlockChain -> Persona -> Int -> Persona
 aplicarNCadenaUsuario unaCadenaDeBloques unaPersona numero = foldr ($) unaPersona (aplicarNCadenaBloque unaCadenaDeBloques numero)
 
+aplicarCadenaAUsuarios :: BlockChain -> [Persona] -> [Persona]
 aplicarCadenaAUsuarios unaCadenaDeBloques unasPersonas = map (fold2R ($) (aplicarCadenaBloque unaCadenaDeBloques)) unasPersonas
 
 cadenaBloquesInfinita = bloque1 : sigCadena bloque1 bloque1
