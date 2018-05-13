@@ -136,10 +136,13 @@ bloqueTests = hspec $ do
     it "22. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que pepe es el unico con un saldo mayor a 10 en su billetera" $ saldoMayorA usuarios 10 bloque1 `shouldBe` [nuevaBilletera 18 pepe]
     it "23. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que pepe es el mas adinerado" $ masAdinerado usuarios bloque1 `shouldBe` nuevaBilletera 18 pepe
     it "24. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Lucho es el menos adinerado" $ menosAdinerado usuarios bloque1 `shouldBe` nuevaBilletera 0 lucho
+--    it "25. Aplicamos nuestro Block Chain a Pepe, deberiamos chequear que el bloque que lo deja con peor saldo es el bloque1, y lo deja con una billetera de 18" $ aplicarBloque peorBloque pepe `shouldBe` nuevaBilletera 18 pepe
     it "26. Aplicamos nuestro Block Chain a Pepe, deberia quedar con una billetera de 115" $ aplicarCadenaUsuario cadenaBloques pepe `shouldBe` nuevaBilletera 115 pepe
     it "27. Aplicamos los primeras 3 bloques de nuestro Block Chain a Pepe, deberia quedar con una billetera de 51" $ aplicarNCadenaUsuario cadenaBloques pepe 3 `shouldBe` nuevaBilletera 51 pepe
     it "28. Aplicamos nuestro Block Chain a Pepe y Lucho. Pepe deberia quedar con una billetera de 115 y Lucho con 0" $ aplicarCadenaAUsuarios cadenaBloques usuarios `shouldBe` [nuevaBilletera 115 pepe, nuevaBilletera 0 lucho]
     it "29. Deberían ser 11 bloques de nuestra Block Chain para que Pepe supere los 10000 en su billetera" $ aplicarCadenaUsuario (take 11 cadenaBloquesInfinita) pepe `shouldBe` nuevaBilletera 16386 pepe
+    -- Para resolver esto último se hace uso del concepto de evaluación diferida, la cual implica que al generar una lista infinita, se procesarán los elementos a medida que se generan.
+    -- En este caso, se tomaron elementos de una blockchain infinita hasta que se dio la condición de que el saldo sea mayor a 10000.
 
 
 type Bloque = [Transaccion]
@@ -193,3 +196,27 @@ sigCadena antUlt ult = (antUlt ++ antUlt) : sigCadena (antUlt ++ antUlt) ult
 flipear :: Foldable t => ((a -> b -> b) -> b -> t a -> b) -> ((a -> b -> b) -> t a -> b -> b)
 flipear func arg1 arg2 arg3 = func arg1 arg3 arg2
 fold2R = flipear foldr
+
+-- Intentos de Resolución del 25):
+
+-- 1. Acá supuse que debía devolver el valor de la menor billetera. Usé map para ir aplicando por separado cada bloque en una persona, dentro del minimum para que devuelva el mínimo de todas las aplicaciones de bloques posibles.
+-- peorSueldo unaCadenadeBloques unaPersona = minimum(map (billetera.(aplicarBloque unBloque)) unaPersona)
+
+-- 2. Acá traté de filtrar todos los bloques que producen el peor efecto. Aunque anduviese, el problema está en que devolvería diez veces bloque1 (y con que lo devuelva una vez, ya está)
+-- peorBloque unaCadenadeBloques unaPersona = filter minimum((map aplicarBloque unaCadenadeBloques) unaPersona) unaCadenadeBloques
+
+-- 3. Otro intento de 1., más que nada para ayudarme a hacer el 4.
+-- peorSueldo unaCadenadeBloques unaPersona = minimum(map (billetera.aplicarBloque unaCadenadeBloques))
+
+-- 4. Acá quise hacerlo con una sola guarda (debe estar mal expresado). Básicamente, si encuentro un bloque que luego de aplicarlo devuelva una persona con billetera igual al mínimo (el peorSueldo definido arriba),
+--    la función devuelve ése bloque.
+-- peorBloque unaCadenadeBloques unaPersona | (map (billetera.aplicarBloque) unaCadenadeBloques unaPersona == minimum(map (billetera.aplicarBloque) unaCadenadeBloques) = bloque
+
+-- 5. Otro intento de 1. usando flip
+-- minimoSueldo unaCadenadeBloques unaPersona = minimum((map (billetera.flip(aplicarBloque unBloque unaPersona)) unaPersona) unaCadenadeBloques)
+
+-- 6. Acá intenté hacer recursividad separando por cabeza y cola. La lógica es la misma que en 4.: si al aplicar el bloque cabeza el resultado es una persona con el peorSueldo, entonces devuelve el bloque cabeza.
+--    Caso contrario, procesa nuevamente la lista colaBlockChain.
+
+-- peorBloque (cabezaBlockChain : colaBlockChain) unaPersona | (billetera.aplicarBloque) cabezaBlockChain unaPersona == minimum((map billetera.aplicarBloque unaCadenadeBloques) unaPersona) = cabezaBlockChain
+--                                                           | otherwise = peorBloque colaBlockChain
