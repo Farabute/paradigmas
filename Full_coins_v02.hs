@@ -131,7 +131,7 @@ transaccion5 = pepeLeDa7UnidadesALucho
 -- Test bloques
 
 bloqueTests = hspec $ do
-  describe "\nProbando el bloques\n" $ do
+  describe "\nProbando los bloques\n" $ do
     it "21. Aplicamos bloque1 a Pepe y deberia resultar un nuevo Pepe con 18 unidades en su billetera" $ aplicarBloque bloque1 pepe `shouldBe` nuevaBilletera 18 pepe
     it "22. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el unico con un saldo mayor a 10 en su billetera" $ saldoMayorA usuarios 10 bloque1 `shouldBe` [nuevaBilletera 18 pepe]
     it "23. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el mas adinerado" $ masAdinerado usuarios bloque1 `shouldBe` nuevaBilletera 18 pepe
@@ -227,3 +227,18 @@ fold2R = flipear foldr
 
 -- peorBloque (cabezaBlockChain : colaBlockChain) unaPersona | (billetera.aplicarBloque) cabezaBlockChain unaPersona == minimum((map billetera.aplicarBloque unaCadenadeBloques) unaPersona) = cabezaBlockChain
 --                                                           | otherwise = peorBloque colaBlockChain
+
+aplicarBloqueFlipeado = flip aplicarBloque
+
+peorSueldo :: BlockChain -> Persona -> Billetera
+peorSueldo [] _ = 999999999999999
+peorSueldo (cabezaBlockChain : colaBlockChain) unaPersona = min ((billetera.(aplicarBloqueFlipeado unaPersona)) cabezaBlockChain) (peorSueldo colaBlockChain unaPersona)
+
+-- 7. Intento con guardas de peorBloque (misma función y lógica que 4.; usa peorSueldo, pero falla por sintaxis.
+-- peorBloque :: BlockChain -> Persona -> Bloque
+-- peorBloque (cabezaBlockChain : colaBlockChain) unaPersona | ((billetera.aplicarBloque) cabezaBlockChain unaPersona) == (peorSueldo (cabezaBlockChain : colaBlockChain) unaPersona) = cabezaBlockChain
+--                                                           | otherwise = peorBloque colaBlockChain unaPersona
+
+-- 8. Intento usando funciones find y fromJust, con misma lógica que 4.; usa peorSueldo, pero falla por sintaxis.
+-- peorBloque :: BlockChain -> Persona -> Bloque
+-- peorBloque unaCadenadeBloques unaPersona = (fromJust.find) ((==) (peorSueldo unaCadenadeBloques unaPersona) (billetera.aplicarBloqueFlipeado unaPersona)) unaCadenadeBloques
