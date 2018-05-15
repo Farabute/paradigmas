@@ -9,6 +9,7 @@ data Persona = Persona {
     billetera :: Float
 } deriving (Show, Eq)
 
+
 pepe = Persona "Jose" 10
 lucho = Persona "Luciano" 2
 pepe2 = Persona "Jose" 20
@@ -136,7 +137,7 @@ bloqueTests = hspec $ do
     it "22. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el unico con un saldo mayor a 10 en su billetera" $ saldoMayorA usuarios 10 bloque1 `shouldBe` [nuevaBilletera 18 pepe]
     it "23. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el mas adinerado" $ masAdinerado usuarios bloque1 `shouldBe` nuevaBilletera 18 pepe
     it "24. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Lucho es el menos adinerado" $ menosAdinerado usuarios bloque1 `shouldBe` nuevaBilletera 0 lucho
---    it "25. Aplicamos nuestro Block Chain a Pepe, deberiamos chequear que el bloque que lo deja con peor saldo es el bloque1, y lo deja con una billetera de 18" $ aplicarBloque peorBloque pepe `shouldBe` nuevaBilletera 18 pepe
+    --it "25. Aplicamos nuestro Block Chain a Pepe, deberiamos chequear que el bloque que lo deja con peor saldo es el bloque1, y lo deja con una billetera de 18" $ determinarPeorBloque pepe cadenaBloques `shouldBe` nuevoPeorBloque pepe [bloque1,bloque1,bloque1,bloque1]
     it "26. Aplicamos nuestro Block Chain a Pepe, deberia quedar con una billetera de 115" $ aplicarCadenaUsuario cadenaBloques pepe `shouldBe` nuevaBilletera 115 pepe
     it "27. Aplicamos los primeras 3 bloques de nuestro Block Chain a Pepe, deberia quedar con una billetera de 51" $ aplicarNCadenaUsuario cadenaBloques pepe 3 `shouldBe` nuevaBilletera 51 pepe
     it "28. Aplicamos nuestro Block Chain a Pepe y Lucho. Pepe deberia quedar con una billetera de 115 y Lucho con 0" $ aplicarCadenaAUsuarios cadenaBloques usuarios `shouldBe` [nuevaBilletera 115 pepe, nuevaBilletera 0 lucho]
@@ -179,11 +180,40 @@ numeroMenor usuarios unBloque = minimum(map (billetera.(aplicarBloque unBloque))
 menosAdinerado :: Usuarios -> Bloque -> Persona
 menosAdinerado usuarios unBloque = head (filter ((== (numeroMenor usuarios unBloque)).billetera) (map (aplicarBloque unBloque) usuarios))
 
+
+
+data PeorBloque = PeorBloque{
+    usuario :: Persona,
+    bloque :: BlockChain
+} deriving (Show)
+
+nuevoPeorBloque :: Persona -> BlockChain -> PeorBloque
+nuevoPeorBloque unUsuario unaBlockchain = PeorBloque{usuario = unUsuario, bloque = unaBlockchain}
+
+determinarPeorBloque :: Persona -> BlockChain -> PeorBloque
+determinarPeorBloque unUsuario unaBlockchain = nuevoPeorBloque unUsuario (bloque(buscarPeorBloque unUsuario unaBlockchain))
+
+buscarPeorBloque :: Persona -> BlockChain -> PeorBloque
+buscarPeorBloque unUsuario unaBlockchain = menosAdineradoLista (enlistarAplicandoBloque unUsuario unaBlockchain)
+
+enlistarAplicandoBloque :: Persona -> BlockChain -> [PeorBloque]
+enlistarAplicandoBloque unUsuario [] = (nuevoPeorBloque unUsuario [] : [])
+enlistarAplicandoBloque unUsuario unaBlockchain = (nuevoPeorBloque (aplicarCadenaUsuario unaBlockchain unUsuario)  unaBlockchain : enlistarAplicandoBloque unUsuario (tail unaBlockchain)) 
+
+menosAdineradoLista::[PeorBloque] -> PeorBloque
+menosAdineradoLista bloques = head(filter((==(numeroMenorLista usuarios)).billetera.usuario) bloques)
+
+numeroMenorLista :: [Persona] -> Float
+numeroMenorLista usuarios = minimum(map billetera usuarios)
+
+
 aplicarCadenaBloque :: BlockChain -> [Persona -> Persona]
 aplicarCadenaBloque = map (aplicarBloque)
 
 aplicarCadenaUsuario :: BlockChain -> Persona -> Persona
 aplicarCadenaUsuario unaCadenaDeBloques unaPersona = foldr ($) unaPersona (aplicarCadenaBloque unaCadenaDeBloques)
+
+
 
 aplicarNCadenaBloque :: BlockChain -> Int -> [Persona -> Persona]
 aplicarNCadenaBloque unaCadenaDeBloques numero | numero >= length unaCadenaDeBloques = map (aplicarBloque) unaCadenaDeBloques
