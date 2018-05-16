@@ -168,7 +168,9 @@ aplicarBloque unBloque unaPersona= foldr ($) unaPersona (transaccionAUsuario unB
 usuariosConSaldoMayorANumero :: Billetera -> Bloque -> Usuarios -> Usuarios
 usuariosConSaldoMayorANumero unNumero unBloque = filter ((> unNumero).billetera.aplicarBloque unBloque)
 
-masAdinerado unosUsuarios unBloque = filter ((> ((billetera.head) unosUsuarios)).billetera.aplicarBloque unBloque) unosUsuarios
+--masAdinerado unosUsuarios unBloque = filter ((> ((billetera.head) unosUsuarios)).billetera.aplicarBloque unBloque) unosUsuarios
+
+peorBloque unaBlockChain unUsuario = map (flip (aplicarBloque) unUsuario) unaBlockChain
 
 type BlockChain = [Bloque]
 blockChain :: BlockChain
