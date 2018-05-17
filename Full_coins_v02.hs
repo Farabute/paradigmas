@@ -169,6 +169,15 @@ usuariosConSaldoMayorANumero :: Billetera -> Bloque -> Usuarios -> Usuarios
 usuariosConSaldoMayorANumero unNumero unBloque = filter ((> unNumero).billetera.aplicarBloque unBloque)
 
 --masAdinerado unosUsuarios unBloque = filter ((> ((billetera.head) unosUsuarios)).billetera.aplicarBloque unBloque) unosUsuarios
+--menosAdinerado unosUsuarios unBloque = 
+
+--condicionUsuarioMenosAdinerado unosUsuarios = ((==)).(minimum.billetera)
+
+--condicionUsuarioMasAdinerado unosUsuarios = all(condicionUsuarioMenosAdinerado)unosUsuarios
+
+usuarioMasAdinerado unosUsuarios unBloque = find((condicionUsuarioMasAdinerado.aplicarBloque) unosUsuarios)
+
+usuarioMenosAdinerado unosUsuarios unBloque = find (condicionUsuarioMenosAdinerado.aplicarBloque) unosUsuarios)
 
 peorBloque unaBlockChain unUsuario = map (flip (aplicarBloque) unUsuario) unaBlockChain
 
