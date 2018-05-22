@@ -172,6 +172,7 @@ masAdinerado (cabeza:cola) unBloque | filter (any ((<=) (billetera cabeza))) [(m
 menosAdinerado :: Usuarios -> Bloque -> Persona
 menosAdinerado (cabeza:cola) unBloque | filter (any ((>=) (billetera cabeza))) [(map (billetera.(aplicarBloque unBloque)) cola)] == [] = cabeza
                                       | otherwise = menosAdinerado cola unBloque
+<<<<<<< HEAD
 
 peorBloque :: BlockChain -> Persona -> Persona
 peorBloque unaBlockChain unUsuario = menosAdinerado (map (flip (aplicarBloque) unUsuario) unaBlockChain) []
@@ -192,6 +193,11 @@ peorBloque unaBlockChain unUsuario = menosAdinerado (map (flip (aplicarBloque) u
 --usuarioMenosAdinerado unosUsuarios unBloque = find((all (not.(condicionMasAdinerado unosUsuarios))).(aplicarBloque unBloque))
 
 
+=======
+
+peorBloque :: BlockChain -> Persona -> Persona
+peorBloque unaBlockChain unUsuario = menosAdinerado (map (flip (aplicarBloque) unUsuario) unaBlockChain) []
+>>>>>>> master
 
 type BlockChain = [Bloque]
 blockChain :: BlockChain
