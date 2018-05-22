@@ -72,8 +72,6 @@ testTransacciones = hspec $ do
   it "20. Aplicamos transaccion 5 y transaccion 2  a Pepe como resultado debe quedar con 8 unidades en su billetera" $ ((impactarTransaccion transaccion2).(impactarTransaccion transaccion5)) pepe`shouldBe` nuevaBilletera 8 pepe
 
 
-  --it "20. Aplicamos transaccion 5 y transaccion 2  a Pepe como resultado debe quedar con 8 unidades en su billetera" $ nuevaBilletera(transaccion2.(flip (nuevaBilletera) pepe).transaccion5) pepe `shouldBe` nuevaBilletera 8 pepe
-
 type Transaccion = Persona -> Billetera
 
 generarTransacciónSimple unEvento unNombre unaPersona | nombre unaPersona == nombre unNombre = (unEvento.billetera) unaPersona
@@ -136,8 +134,8 @@ testBloques = hspec $ do
   describe "\nProbando los bloques\n" $ do
     it "21. Aplicamos bloque1 a Pepe y deberia resultar un nuevo Pepe con 18 unidades en su billetera" $ aplicarBloque bloque1 pepe `shouldBe` nuevaBilletera 18 pepe
     it "22. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el unico con un saldo mayor a 10 en su billetera" $ usuariosConSaldoMayorANumero 10 bloque1 usuarios `shouldBe` [nuevaBilletera 10 pepe]
-    it "23. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el mas adinerado" $ masAdinerado usuarios bloque1 `shouldBe` pepe
-    it "24. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Lucho es el menos adinerado" $ menosAdinerado usuarios bloque1 `shouldBe` lucho
+    it "23. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el mas adinerado" $ usuarioMasAdinerado usuarios bloque1 `shouldBe` pepe
+    it "24. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Lucho es el menos adinerado" $ usuarioMenosAdinerado usuarios bloque1 `shouldBe` lucho
     it "25. Aplicamos nuestro Block Chain a Pepe, deberiamos chequear que el bloque1 lo deja con peor saldo, y lo deja con una billetera de 18" $ peorBloque blockChain pepe `shouldBe` nuevaBilletera 18 pepe
     it "26. Aplicamos nuestro Block Chain a Pepe, deberia quedar con una billetera de 115" $ aplicarBlockChainAUsuario blockChain pepe `shouldBe` nuevaBilletera 115 pepe
     it "27. Aplicamos los primeras 3 bloques de nuestro Block Chain a Pepe, deberia quedar con una billetera de 51" $ saldoEnCiertoPuntoDeBlockChain 3 blockChain pepe `shouldBe` nuevaBilletera 51 pepe
@@ -165,39 +163,30 @@ aplicarBloque unBloque unaPersona= foldr ($) unaPersona (transaccionAUsuario unB
 usuariosConSaldoMayorANumero :: Billetera -> Bloque -> Usuarios -> Usuarios
 usuariosConSaldoMayorANumero unNumero unBloque = filter ((> unNumero).billetera.aplicarBloque unBloque)
 
-masAdinerado :: Usuarios -> Bloque -> Persona
-masAdinerado (cabeza:cola) unBloque | filter (any ((<=) (billetera cabeza))) [(map (billetera.(aplicarBloque unBloque)) cola)] == [] = cabeza
-                                    | otherwise = masAdinerado cola unBloque
-
-menosAdinerado :: Usuarios -> Bloque -> Persona
-menosAdinerado (cabeza:cola) unBloque | filter (any ((>=) (billetera cabeza))) [(map (billetera.(aplicarBloque unBloque)) cola)] == [] = cabeza
-                                      | otherwise = menosAdinerado cola unBloque
-<<<<<<< HEAD
-
 peorBloque :: BlockChain -> Persona -> Persona
-peorBloque unaBlockChain unUsuario = menosAdinerado (map (flip (aplicarBloque) unUsuario) unaBlockChain) []
-
---elPrimeroEsMasAdinerado :: Persona -> Persona -> Bool
---elPrimeroEsMasAdinerado unUsuario otroUsuario = (((<=)(billetera otroUsuario)).billetera) unUsuario
+peorBloque unaBlockChain unUsuario = usuarioMenosAdinerado (map (flip (aplicarBloque) unUsuario) unaBlockChain) []
 
 
---condicionMasAdinerado :: Usuarios -> Persona -> Bool 
---condicionMasAdinerado [] unUsuario = True
---condicionMasAdinerado (otroUsuario : otrosUsuarios) unUsuario = elPrimeroEsMasAdinerado unUsuario otroUsuario && condicionMasAdinerado otrosUsuarios unUsuario
+elPrimeroEsMasAdinerado :: Persona -> Persona -> Bool
+elPrimeroEsMasAdinerado unUsuario otroUsuario = (((<=)(billetera otroUsuario)).billetera) unUsuario
+
+condicionMasAdinerado :: Bloque -> Usuarios -> Persona -> Bool
+condicionMasAdinerado unBloque unosUsuarios unUsuario = all((elPrimeroEsMasAdinerado (aplicarBloque unBloque unUsuario)).aplicarBloque unBloque) unosUsuarios
+
+usuarioMasAdinerado :: Usuarios -> Bloque -> Persona
+usuarioMasAdinerado unosUsuarios unBloque = fromJust(find(condicionMasAdinerado unBloque unosUsuarios) unosUsuarios )
 
 
---usuarioMasAdinerado :: Usuarios -> Bloque -> Persona
---usuarioMasAdinerado unosUsuarios unBloque = find (all(condicionMasAdinerado (aplicarBloque unBloque unosUsuarios) unosUsuarios)) unosUsuarios
+elPrimeroEsMenosAdinerado :: Persona -> Persona -> Bool
+elPrimeroEsMenosAdinerado unUsuario otroUsuario = not(elPrimeroEsMasAdinerado unUsuario otroUsuario)
 
---usuarioMenosAdinerado :: Usuarios -> Bloque -> Persona
---usuarioMenosAdinerado unosUsuarios unBloque = find((all (not.(condicionMasAdinerado unosUsuarios))).(aplicarBloque unBloque))
+condicionMenosAdinerado :: Bloque -> Usuarios -> Persona -> Bool
+condicionMenosAdinerado unBloque unosUsuarios unUsuario = all((elPrimeroEsMenosAdinerado (aplicarBloque unBloque unUsuario)).aplicarBloque unBloque) unosUsuarios
+
+usuarioMenosAdinerado :: Usuarios -> Bloque -> Persona
+usuarioMenosAdinerado unosUsuarios unBloque = fromJust(find(condicionMenosAdinerado unBloque unosUsuarios) unosUsuarios )
 
 
-=======
-
-peorBloque :: BlockChain -> Persona -> Persona
-peorBloque unaBlockChain unUsuario = menosAdinerado (map (flip (aplicarBloque) unUsuario) unaBlockChain) []
->>>>>>> master
 
 type BlockChain = [Bloque]
 blockChain :: BlockChain
