@@ -136,14 +136,14 @@ testBloques = hspec $ do
   describe "\nProbando los bloques\n" $ do
     it "21. Aplicamos bloque1 a Pepe y deberia resultar un nuevo Pepe con 18 unidades en su billetera" $ aplicarBloque bloque1 pepe `shouldBe` nuevaBilletera 18 pepe
     it "22. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el unico con un saldo mayor a 10 en su billetera" $ usuariosConSaldoMayorANumero 10 bloque1 usuarios `shouldBe` [nuevaBilletera 10 pepe]
-    --it "23. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el mas adinerado" $ masAdinerado usuarios bloque1 `shouldBe` nuevaBilletera 18 pepe
-    --it "24. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Lucho es el menos adinerado" $ menosAdinerado usuarios bloque1 `shouldBe` nuevaBilletera 0 lucho
-    --it "25. Aplicamos nuestro Block Chain a Pepe, deberiamos chequear que el bloque que lo deja con peor saldo es el bloque1, y lo deja con una billetera de 18" $ determinarPeorBloque pepe cadenaBloques `shouldBe` nuevoPeorBloque pepe [bloque1,bloque1,bloque1,bloque1]
+    it "23. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el mas adinerado" $ masAdinerado usuarios bloque1 `shouldBe` pepe
+    it "24. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Lucho es el menos adinerado" $ menosAdinerado usuarios bloque1 `shouldBe` lucho
+    it "25. Aplicamos nuestro Block Chain a Pepe, deberiamos chequear que el bloque1 lo deja con peor saldo, y lo deja con una billetera de 18" $ peorBloque blockChain pepe `shouldBe` nuevaBilletera 18 pepe
     it "26. Aplicamos nuestro Block Chain a Pepe, deberia quedar con una billetera de 115" $ aplicarBlockChainAUsuario blockChain pepe `shouldBe` nuevaBilletera 115 pepe
     it "27. Aplicamos los primeras 3 bloques de nuestro Block Chain a Pepe, deberia quedar con una billetera de 51" $ saldoEnCiertoPuntoDeBlockChain 3 blockChain pepe `shouldBe` nuevaBilletera 51 pepe
     it "28. Aplicamos nuestro Block Chain a Pepe y Lucho. Pepe deberia quedar con una billetera de 115 y Lucho con 0" $ (sum.(map billetera).aplicarBlockChainAConjuntoDeUsuarios blockChain) usuarios `shouldBe` 115
     it "29. Deberían ser 11 bloques de nuestra Block Chain para que Pepe supere los 10000 en su billetera" $ cuantosBloquesNecesito pepe blockChainInfinita 1 `shouldBe` 11
-    -- Para resolver esto último se hace uso del concepto de evaluación diferida, la cual implica que al generar una lista infinita, se procesarán los elementos a medida que se generan.
+ -- Para resolver esto último se hace uso del concepto de evaluación diferida, la cual implica que al generar una lista infinita, se procesarán los elementos a medida que se generan.
     -- En este caso, se tomaron elementos de una blockchain infinita hasta que se dio la condición de que el saldo sea mayor a 10000.
 
 type Bloque = [Transaccion]
@@ -155,10 +155,7 @@ bloque2 :: Bloque
 bloque2 = [transaccion2,transaccion2,transaccion2,transaccion2,transaccion2]
 
 type Usuarios = [Persona]
---piko = Persona "Mariano" 60
---usuarios = [pepe,lucho, piko ,pepe ]
 usuarios = [pepe,lucho]
-
 
 transaccionAUsuario = map (impactarTransaccion)
 
@@ -168,18 +165,33 @@ aplicarBloque unBloque unaPersona= foldr ($) unaPersona (transaccionAUsuario unB
 usuariosConSaldoMayorANumero :: Billetera -> Bloque -> Usuarios -> Usuarios
 usuariosConSaldoMayorANumero unNumero unBloque = filter ((> unNumero).billetera.aplicarBloque unBloque)
 
---masAdinerado unosUsuarios unBloque = filter ((> ((billetera.head) unosUsuarios)).billetera.aplicarBloque unBloque) unosUsuarios
---menosAdinerado unosUsuarios unBloque = 
+masAdinerado :: Usuarios -> Bloque -> Persona
+masAdinerado (cabeza:cola) unBloque | filter (any ((<=) (billetera cabeza))) [(map (billetera.(aplicarBloque unBloque)) cola)] == [] = cabeza
+                                    | otherwise = masAdinerado cola unBloque
 
---condicionUsuarioMenosAdinerado unosUsuarios = ((==)).(minimum.billetera)
+menosAdinerado :: Usuarios -> Bloque -> Persona
+menosAdinerado (cabeza:cola) unBloque | filter (any ((>=) (billetera cabeza))) [(map (billetera.(aplicarBloque unBloque)) cola)] == [] = cabeza
+                                      | otherwise = menosAdinerado cola unBloque
 
---condicionUsuarioMasAdinerado unosUsuarios = all(condicionUsuarioMenosAdinerado)unosUsuarios
+peorBloque :: BlockChain -> Persona -> Persona
+peorBloque unaBlockChain unUsuario = menosAdinerado (map (flip (aplicarBloque) unUsuario) unaBlockChain) []
 
-usuarioMasAdinerado unosUsuarios unBloque = find((condicionUsuarioMasAdinerado.aplicarBloque) unosUsuarios)
+--elPrimeroEsMasAdinerado :: Persona -> Persona -> Bool
+--elPrimeroEsMasAdinerado unUsuario otroUsuario = (((<=)(billetera otroUsuario)).billetera) unUsuario
 
-usuarioMenosAdinerado unosUsuarios unBloque = find (condicionUsuarioMenosAdinerado.aplicarBloque) unosUsuarios)
 
-peorBloque unaBlockChain unUsuario = map (flip (aplicarBloque) unUsuario) unaBlockChain
+--condicionMasAdinerado :: Usuarios -> Persona -> Bool 
+--condicionMasAdinerado [] unUsuario = True
+--condicionMasAdinerado (otroUsuario : otrosUsuarios) unUsuario = elPrimeroEsMasAdinerado unUsuario otroUsuario && condicionMasAdinerado otrosUsuarios unUsuario
+
+
+--usuarioMasAdinerado :: Usuarios -> Bloque -> Persona
+--usuarioMasAdinerado unosUsuarios unBloque = find (all(condicionMasAdinerado (aplicarBloque unBloque unosUsuarios) unosUsuarios)) unosUsuarios
+
+--usuarioMenosAdinerado :: Usuarios -> Bloque -> Persona
+--usuarioMenosAdinerado unosUsuarios unBloque = find((all (not.(condicionMasAdinerado unosUsuarios))).(aplicarBloque unBloque))
+
+
 
 type BlockChain = [Bloque]
 blockChain :: BlockChain
@@ -202,3 +214,8 @@ blockChainInfinita = generarBlockChainInfinita bloque1
 
 cuantosBloquesNecesito unaPersona unaBlockChain unNumero | billetera unaPersona < 10000 = cuantosBloquesNecesito (saldoEnCiertoPuntoDeBlockChain unNumero unaBlockChain unaPersona) unaBlockChain (unNumero + 1)
                                                          | otherwise = unNumero
+
+
+--listopio = [12,1,7,7,5,1,9,2,12,3,4,5,5]
+--esMenor [] = []
+--esMenor (cabeza:cola) = find (all ((<=) cabeza)) [(cabeza:cola)] : esMenor cola
