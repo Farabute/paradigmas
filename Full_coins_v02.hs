@@ -56,35 +56,33 @@ quedaIgual = id
 
 testTransacciones = hspec $ do
  describe "\nProbando las transacciones\n" $ do
-  it "11. Pepe realiza transacción 1" $ luchoCierraLaCuenta pepe `shouldBe` 10
-  it "    Transacción 1 sobre billetera de 20 unidades" $ luchoCierraLaCuenta pepe2 `shouldBe` 20
-  it "12. Pepe realiza transacción 2" $ pepeDeposita5Monedas pepe `shouldBe` 15
-  it "13. Pepe2 realiza transacción 2 con billetera de 50 unidades" $ ((depositar 30).pepeDeposita5Monedas) pepe2 `shouldBe` 55
-  it "14. Pepe toca y se va" $ (tocoYMeVoy.billetera) pepe `shouldBe` 0
-  it "    Lucho toca y se va" $ luchoTocaYSeVa lucho `shouldBe` 0
-  it "15. Pepe es un ahorrante errante" $ (ahorranteErrante.billetera) pepe `shouldBe` 34
-  it "    Lucho es un ahorrante errante" $ luchoEsUnAhorranteErrante lucho `shouldBe` 24.4
+  it "11. Pepe realiza transacción 1 sobre billetera de 20 unidades" $ luchoCierraLaCuenta pepe 20 `shouldBe` 20
+  it "12. Pepe realiza transacción 2" $ pepeDeposita5Monedas pepe 10 `shouldBe` 15
+  it "13. Pepe2 realiza transacción 2 con billetera de 50 unidades" $ pepeDeposita5Monedas pepe2 50 `shouldBe` 55
+  it "14. Lucho toca y se va" $ luchoTocaYSeVa lucho 10 `shouldBe` 0
+  it "    Pepe toca y se va" $ luchoTocaYSeVa pepe 10 `shouldBe` 10
+  it "15. Lucho es un ahorrante errante" $ luchoEsUnAhorranteErrante lucho 10 `shouldBe` 34
+  it "    Pepe es un ahorrante errante" $ luchoEsUnAhorranteErrante pepe 10 `shouldBe` 10
  describe "\nProbando el pago entre usuarios\n" $ do
-  it "16. Pepe le da 7 unidades a Lucho" $ pepeLeDa7UnidadesALucho pepe `shouldBe` 3
-  it "17. Pepe le da 7 unidades a Lucho" $ pepeLeDa7UnidadesALucho lucho `shouldBe` 9
+  it "16. Pepe le da 7 unidades a Lucho" $ pepeLeDa7UnidadesALucho pepe 10 `shouldBe` 3
+  it "17. Pepe le da 7 unidades a Lucho" $ pepeLeDa7UnidadesALucho lucho 10 `shouldBe` 17
   it "18. Aplicamos transaccion 1 a Pepe y debe quedar igual" $ impactarTransaccion transaccion1 pepe `shouldBe` pepe
   it "19. Aplicamos transaccion 5 a Lucho y debe producir que quede con 9 unidades en su billetera" $ impactarTransaccion transaccion5 lucho `shouldBe` nuevaBilletera 9 lucho
   it "20. Aplicamos transaccion 5 y transaccion 2  a Pepe como resultado debe quedar con 8 unidades en su billetera" $ ((impactarTransaccion transaccion2).(impactarTransaccion transaccion5)) pepe`shouldBe` nuevaBilletera 8 pepe
 
+type Transaccion = Persona -> Evento
 
-type Transaccion = Persona -> Billetera
-
-generarTransacciónSimple unEvento unNombre unaPersona | nombre unaPersona == nombre unNombre = (unEvento.billetera) unaPersona
-                                                      | otherwise = (quedaIgual.billetera) unaPersona
+generarTransacciónSimple unEvento unNombre unaPersona | nombre unaPersona == unNombre = unEvento
+                                                      | otherwise = quedaIgual
 
 luchoCierraLaCuenta :: Transaccion
-luchoCierraLaCuenta = generarTransacciónSimple cierreDeCuenta lucho
+luchoCierraLaCuenta = generarTransacciónSimple cierreDeCuenta "Luciano"
 
 transaccion1 :: Transaccion
 transaccion1 = luchoCierraLaCuenta
 
 pepeDeposita5Monedas :: Transaccion
-pepeDeposita5Monedas = generarTransacciónSimple (depositar 5) pepe
+pepeDeposita5Monedas = generarTransacciónSimple (depositar 5) "Jose"
 
 transaccion2 :: Transaccion
 transaccion2 = pepeDeposita5Monedas
@@ -96,35 +94,34 @@ tocoYMeVoy = cierreDeCuenta.upgrade.(depositar 15)
 ahorranteErrante = (depositar 10).upgrade.(depositar 8).(extraccion 1).(depositar 2).(depositar 1)
 
 luchoTocaYSeVa :: Transaccion
-luchoTocaYSeVa = generarTransacciónSimple tocoYMeVoy lucho
+luchoTocaYSeVa = generarTransacciónSimple tocoYMeVoy "Luciano"
 
 transaccion3 :: Transaccion
 transaccion3 = luchoTocaYSeVa
 
 luchoEsUnAhorranteErrante :: Transaccion
-luchoEsUnAhorranteErrante = generarTransacciónSimple ahorranteErrante lucho
+luchoEsUnAhorranteErrante = generarTransacciónSimple ahorranteErrante "Luciano"
 
 transaccion4 :: Transaccion
 transaccion4 = luchoEsUnAhorranteErrante
 
 -- Pago entre usuarios --
 
-generarTransacciónCompleja unEventoUno unEventoDos unNombreUno unNombreDos unaPersona | nombre unaPersona == nombre unNombreUno = (unEventoUno.billetera) unaPersona
-                                                                                      | nombre unaPersona == nombre unNombreDos = (unEventoDos.billetera) unaPersona
-                                                                                      | otherwise = (quedaIgual.billetera) unaPersona
+generarTransacciónCompleja unEventoUno unEventoDos unNombreUno unNombreDos unaPersona | nombre unaPersona == unNombreUno = unEventoUno
+                                                                                      | nombre unaPersona == unNombreDos = unEventoDos
+                                                                                      | otherwise = quedaIgual
 
-type TransaccionEntreUsuarios = Persona -> Billetera
+type TransaccionEntreUsuarios = Persona -> Evento
 
 pepeLeDa7UnidadesALucho :: TransaccionEntreUsuarios
-pepeLeDa7UnidadesALucho = generarTransacciónCompleja (extraccion 7) (depositar 7) pepe lucho
+pepeLeDa7UnidadesALucho = generarTransacciónCompleja (extraccion 7) (depositar 7) "Jose" "Luciano"
 
 transaccion5 :: Transaccion
 transaccion5 = pepeLeDa7UnidadesALucho
 
-
 impactarTransaccion :: Transaccion -> Persona -> Persona
-impactarTransaccion unaTransaccion unaPersona = nuevaBilletera (unaTransaccion unaPersona) unaPersona
-impactarTransaccion2 unaPersona unaTransaccion = nuevaBilletera (unaTransaccion unaPersona) unaPersona
+impactarTransaccion unaTransaccion unaPersona = nuevaBilletera (unaTransaccion unaPersona (billetera unaPersona)) unaPersona
+impactarTransaccion2 unaPersona unaTransaccion = nuevaBilletera (unaTransaccion unaPersona (billetera unaPersona)) unaPersona
 
 -- Bloque --
 
