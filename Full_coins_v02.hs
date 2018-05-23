@@ -23,16 +23,16 @@ nuevaBilletera unNumero unaPersona = unaPersona {billetera = unNumero}
 
 testEventosBilleteras = hspec $ do
   describe "Probando los eventos\n" $ do
-  it "1. A una billetera de 10 creditos le depositamos 10 monedas" $ depositar 10 10 `shouldBe` 20
-  it "2. A una billetera de 10 creditos le extraemos 3 monedas" $ extraccion 3 10 `shouldBe` 7
-  it "3. A una billetera de 10 creditos le extraemos 15 monedas" $ extraccion 15 10 `shouldBe` 0
-  it "4. A una billetera de 10 creditos le hacemos un upgrade" $ upgrade 10 `shouldBe` 12
-  it "5. Una billetera de 10 creditos sufre un cierre de cuenta" $ cierreDeCuenta 10 `shouldBe` 0
-  it "6. A una billetera de 10 creditos le aplicamos queda igual" $ quedaIgual 10 `shouldBe` 10
-  it "7. A una billetera de 10 creditos le depositamos 1000 monedas y luego un upgrade" $  (upgrade.depositar 1000) 10 `shouldBe` 1020
+  it "1. A una billetera de 10 créditos le depositamos 10 monedas" $ depositar 10 10 `shouldBe` 20
+  it "2. A una billetera de 10 créditos le extraemos 3 monedas" $ extraccion 3 10 `shouldBe` 7
+  it "3. A una billetera de 10 créditos le extraemos 15 monedas" $ extraccion 15 10 `shouldBe` 0
+  it "4. A una billetera de 10 créditos le hacemos un upgrade" $ upgrade 10 `shouldBe` 12
+  it "5. Una billetera de 10 créditos sufre un cierre de cuenta" $ cierreDeCuenta 10 `shouldBe` 0
+  it "6. A una billetera de 10 créditos le aplicamos queda igual" $ quedaIgual 10 `shouldBe` 10
+  it "7. A una billetera de 10 créditos le depositamos 1000 monedas y luego un upgrade" $  (upgrade.depositar 1000) 10 `shouldBe` 1020
   describe "\nProbando los eventos en Usuarios\n" $ do
   it "8. Estado de la billetera de pepe" $ billetera pepe `shouldBe` 10
-  it "9. Pepe cerro su cuenta" $ (cierreDeCuenta.billetera) pepe `shouldBe` 0
+  it "9. Pepe cerró su cuenta" $ (cierreDeCuenta.billetera) pepe `shouldBe` 0
   it "10. Pepe deposita 15 monedas, extrae 2 y obtiene un upgrade" $ (upgrade.extraccion 2.depositar 15.billetera) pepe `shouldBe` 27.6
 
 -- Eventos --
@@ -66,9 +66,9 @@ testTransacciones = hspec $ do
  describe "\nProbando el pago entre usuarios\n" $ do
   it "16. Pepe le da 7 unidades a Lucho" $ pepeLeDa7UnidadesALucho pepe 10 `shouldBe` 3
   it "17. Pepe le da 7 unidades a Lucho" $ pepeLeDa7UnidadesALucho lucho 10 `shouldBe` 17
-  it "18. Aplicamos transaccion 1 a Pepe y debe quedar igual" $ impactarTransaccion transaccion1 pepe `shouldBe` pepe
-  it "19. Aplicamos transaccion 5 a Lucho y debe producir que quede con 9 unidades en su billetera" $ impactarTransaccion transaccion5 lucho `shouldBe` nuevaBilletera 9 lucho
-  it "20. Aplicamos transaccion 5 y transaccion 2  a Pepe como resultado debe quedar con 8 unidades en su billetera" $ ((impactarTransaccion transaccion2).(impactarTransaccion transaccion5)) pepe`shouldBe` nuevaBilletera 8 pepe
+  it "18. Aplicamos transacción 1 a Pepe y debe quedar igual" $ impactarTransaccion transaccion1 pepe `shouldBe` pepe
+  it "19. Aplicamos transacción 5 a Lucho y debe producir que quede con 9 unidades en su billetera" $ impactarTransaccion transaccion5 lucho `shouldBe` nuevaBilletera 9 lucho
+  it "20. Aplicamos transacción 5 y transacción 2 a Pepe como resultado debe quedar con 8 unidades en su billetera" $ ((impactarTransaccion transaccion2).(impactarTransaccion transaccion5)) pepe`shouldBe` nuevaBilletera 8 pepe
 
 type Transaccion = Persona -> Evento
 
@@ -107,14 +107,14 @@ transaccion4 = luchoEsUnAhorranteErrante
 
 -- Pago entre usuarios --
 
-generarTransacciónCompleja unEventoUno unEventoDos unNombreUno unNombreDos unaPersona | nombre unaPersona == unNombreUno = unEventoUno
-                                                                                      | nombre unaPersona == unNombreDos = unEventoDos
-                                                                                      | otherwise = quedaIgual
+generarTransacciónCompleja unNombreUno unNombreDos unMonto unaPersona | nombre unaPersona == unNombreUno = extraccion unMonto
+                                                                      | nombre unaPersona == unNombreDos = depositar unMonto
+                                                                      | otherwise = quedaIgual
 
 type TransaccionEntreUsuarios = Persona -> Evento
 
 pepeLeDa7UnidadesALucho :: TransaccionEntreUsuarios
-pepeLeDa7UnidadesALucho = generarTransacciónCompleja (extraccion 7) (depositar 7) "Jose" "Luciano"
+pepeLeDa7UnidadesALucho = generarTransacciónCompleja "Jose" "Luciano" 7
 
 transaccion5 :: Transaccion
 transaccion5 = pepeLeDa7UnidadesALucho
@@ -129,14 +129,14 @@ impactarTransaccion2 unaPersona unaTransaccion = nuevaBilletera (unaTransaccion 
 
 testBloques = hspec $ do
   describe "\nProbando los bloques\n" $ do
-    it "21. Aplicamos bloque1 a Pepe y deberia resultar un nuevo Pepe con 18 unidades en su billetera" $ aplicarBloque bloque1 pepe `shouldBe` nuevaBilletera 18 pepe
-    it "22. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el unico con un saldo mayor a 10 en su billetera" $ usuariosConSaldoMayorANumero 10 bloque1 usuarios `shouldBe` [nuevaBilletera 10 pepe]
-    it "23. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Pepe es el mas adinerado" $ usuarioMasAdinerado usuarios bloque1 `shouldBe` pepe
-    it "24. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberiamos chequear que Lucho es el menos adinerado" $ usuarioMenosAdinerado usuarios bloque1 `shouldBe` lucho
-    it "25. Aplicamos nuestro Block Chain a Pepe, deberiamos chequear que el bloque1 lo deja con peor saldo, y lo deja con una billetera de 18" $ peorBloque blockChain pepe `shouldBe` nuevaBilletera 18 pepe
-    it "26. Aplicamos nuestro Block Chain a Pepe, deberia quedar con una billetera de 115" $ aplicarBlockChainAUsuario blockChain pepe `shouldBe` nuevaBilletera 115 pepe
-    it "27. Aplicamos los primeras 3 bloques de nuestro Block Chain a Pepe, deberia quedar con una billetera de 51" $ saldoEnCiertoPuntoDeBlockChain 3 blockChain pepe `shouldBe` nuevaBilletera 51 pepe
-    it "28. Aplicamos nuestro Block Chain a Pepe y Lucho. Pepe deberia quedar con una billetera de 115 y Lucho con 0" $ (sum.(map billetera).aplicarBlockChainAConjuntoDeUsuarios blockChain) usuarios `shouldBe` 115
+    it "21. Aplicamos bloque1 a Pepe y debería resultar un nuevo Pepe con 18 unidades en su billetera" $ aplicarBloque bloque1 pepe `shouldBe` nuevaBilletera 18 pepe
+    it "22. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberíamos chequear que Pepe es el único con un saldo mayor a 10 en su billetera" $ usuariosConSaldoMayorANumero 10 bloque1 usuarios `shouldBe` [nuevaBilletera 10 pepe]
+    it "23. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberíamos chequear que Pepe es el más adinerado" $ usuarioMasAdinerado usuarios bloque1 `shouldBe` pepe
+    it "24. Aplicamos bloque1 a los usuarios Pepe y Lucho, deberíamos chequear que Lucho es el menos adinerado" $ usuarioMenosAdinerado usuarios bloque1 `shouldBe` lucho
+    it "25. Aplicamos nuestro Block Chain a Pepe, deberíamos chequear que el bloque1 lo deja con peor saldo, y lo deja con una billetera de 18" $ peorBloque blockChain pepe `shouldBe` nuevaBilletera 18 pepe
+    it "26. Aplicamos nuestro Block Chain a Pepe, debería quedar con una billetera de 115" $ aplicarBlockChainAUsuario blockChain pepe `shouldBe` nuevaBilletera 115 pepe
+    it "27. Aplicamos los primeras 3 bloques de nuestro Block Chain a Pepe, debería quedar con una billetera de 51" $ saldoEnCiertoPuntoDeBlockChain 3 blockChain pepe `shouldBe` nuevaBilletera 51 pepe
+    it "28. Aplicamos nuestro Block Chain a Pepe y Lucho. Pepe debería quedar con una billetera de 115 y Lucho con 0" $ (sum.(map billetera).aplicarBlockChainAConjuntoDeUsuarios blockChain) usuarios `shouldBe` 115
     it "29. Deberían ser 11 bloques de nuestra Block Chain para que Pepe supere los 10000 en su billetera" $ cuantosBloquesNecesito pepe blockChainInfinita 1 `shouldBe` 11
  -- Para resolver esto último se hace uso del concepto de evaluación diferida, la cual implica que al generar una lista infinita, se procesarán los elementos a medida que se generan.
     -- En este caso, se tomaron elementos de una blockchain infinita hasta que se dio la condición de que el saldo sea mayor a 10000.
