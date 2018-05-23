@@ -72,17 +72,17 @@ testTransacciones = hspec $ do
 
 type Transaccion = Persona -> Evento
 
-generarTransacciónSimple unEvento unNombre unaPersona | nombre unaPersona == unNombre = unEvento
+generarTransacciónSimple unEvento unNombre unaPersona | nombre unaPersona == nombre unNombre = unEvento
                                                       | otherwise = quedaIgual
 
 luchoCierraLaCuenta :: Transaccion
-luchoCierraLaCuenta = generarTransacciónSimple cierreDeCuenta "Luciano"
+luchoCierraLaCuenta = generarTransacciónSimple cierreDeCuenta lucho
 
 transaccion1 :: Transaccion
 transaccion1 = luchoCierraLaCuenta
 
 pepeDeposita5Monedas :: Transaccion
-pepeDeposita5Monedas = generarTransacciónSimple (depositar 5) "Jose"
+pepeDeposita5Monedas = generarTransacciónSimple (depositar 5) pepe
 
 transaccion2 :: Transaccion
 transaccion2 = pepeDeposita5Monedas
@@ -94,27 +94,27 @@ tocoYMeVoy = cierreDeCuenta.upgrade.(depositar 15)
 ahorranteErrante = (depositar 10).upgrade.(depositar 8).(extraccion 1).(depositar 2).(depositar 1)
 
 luchoTocaYSeVa :: Transaccion
-luchoTocaYSeVa = generarTransacciónSimple tocoYMeVoy "Luciano"
+luchoTocaYSeVa = generarTransacciónSimple tocoYMeVoy lucho
 
 transaccion3 :: Transaccion
 transaccion3 = luchoTocaYSeVa
 
 luchoEsUnAhorranteErrante :: Transaccion
-luchoEsUnAhorranteErrante = generarTransacciónSimple ahorranteErrante "Luciano"
+luchoEsUnAhorranteErrante = generarTransacciónSimple ahorranteErrante lucho
 
 transaccion4 :: Transaccion
 transaccion4 = luchoEsUnAhorranteErrante
 
 -- Pago entre usuarios --
 
-generarTransacciónCompleja unNombreUno unNombreDos unMonto unaPersona | nombre unaPersona == unNombreUno = extraccion unMonto
-                                                                      | nombre unaPersona == unNombreDos = depositar unMonto
+generarTransacciónCompleja unNombreUno unNombreDos unMonto unaPersona | nombre unaPersona == nombre unNombreUno = extraccion unMonto
+                                                                      | nombre unaPersona == nombre unNombreDos = depositar unMonto
                                                                       | otherwise = quedaIgual
 
 type TransaccionEntreUsuarios = Persona -> Evento
 
 pepeLeDa7UnidadesALucho :: TransaccionEntreUsuarios
-pepeLeDa7UnidadesALucho = generarTransacciónCompleja "Jose" "Luciano" 7
+pepeLeDa7UnidadesALucho = generarTransacciónCompleja pepe lucho 7
 
 transaccion5 :: Transaccion
 transaccion5 = pepeLeDa7UnidadesALucho
