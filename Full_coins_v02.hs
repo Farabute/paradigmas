@@ -175,7 +175,7 @@ usuarioMasAdinerado unosUsuarios unBloque = fromJust(find(condicionMasAdinerado 
 
 
 elPrimeroEsMenosAdinerado :: Persona -> Persona -> Bool
-elPrimeroEsMenosAdinerado unUsuario otroUsuario = not(elPrimeroEsMasAdinerado unUsuario otroUsuario)
+elPrimeroEsMenosAdinerado unUsuario otroUsuario = (((>=)(billetera otroUsuario)).billetera) unUsuario
 
 condicionMenosAdinerado :: Bloque -> Usuarios -> Persona -> Bool
 condicionMenosAdinerado unBloque unosUsuarios unUsuario = all((elPrimeroEsMenosAdinerado (aplicarBloque unBloque unUsuario)).aplicarBloque unBloque) unosUsuarios
