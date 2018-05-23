@@ -72,8 +72,11 @@ testTransacciones = hspec $ do
 
 type Transaccion = Persona -> Evento
 
-generarTransacciónSimple unEvento unNombre unaPersona | nombre unaPersona == nombre unNombre = unEvento
+generarTransacciónSimple unEvento unNombre unaPersona | compararUsuarios unNombre unaPersona = unEvento
                                                       | otherwise = quedaIgual
+                                                      
+compararUsuarios :: Persona -> Persona -> Bool
+compararUsuarios unNombre unaPersona = nombre unaPersona == nombre unNombre
 
 luchoCierraLaCuenta :: Transaccion
 luchoCierraLaCuenta = generarTransacciónSimple cierreDeCuenta lucho
@@ -107,8 +110,8 @@ transaccion4 = luchoEsUnAhorranteErrante
 
 -- Pago entre usuarios --
 
-generarTransacciónCompleja unNombreUno unNombreDos unMonto unaPersona | nombre unaPersona == nombre unNombreUno = extraccion unMonto
-                                                                      | nombre unaPersona == nombre unNombreDos = depositar unMonto
+generarTransacciónCompleja unNombreUno unNombreDos unMonto unaPersona | compararUsuarios unNombreUno unaPersona = extraccion unMonto
+                                                                      | compararUsuarios unNombreDos unaPersona = depositar unMonto
                                                                       | otherwise = quedaIgual
 
 type TransaccionEntreUsuarios = Persona -> Evento
